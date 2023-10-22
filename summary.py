@@ -1,6 +1,4 @@
-#--------------------------------------------#
 #   该部分代码用于看网络结构
-#--------------------------------------------#
 import torch
 from thop import clever_format, profile
 from torchsummary import summary
