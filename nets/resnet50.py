@@ -45,9 +45,7 @@ class Bottleneck(nn.Module):
 
 class ResNet(nn.Module):
     def __init__(self, block, layers, num_classes=1000):
-        # -----------------------------------#
         #   假设输入进来的图片是600,600,3
-        # -----------------------------------#
         self.inplanes = 64
         super(ResNet, self).__init__()
 
