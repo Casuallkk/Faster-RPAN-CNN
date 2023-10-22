@@ -56,13 +56,7 @@ class FRCNN(object):
 
         show_config(**self._defaults)
 
-    # ---------------------------------------------------#
-    #   载入模型
-    # ---------------------------------------------------#
     def generate(self):
-        # -------------------------------#
-        #   载入模型与权值
-        # -------------------------------#
         self.net = FasterRCNN(self.num_classes, "predict", anchor_scales=self.anchors_size, backbone=self.backbone)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.net.load_state_dict(torch.load(self.model_path, map_location=device))
@@ -73,13 +67,7 @@ class FRCNN(object):
             self.net = nn.DataParallel(self.net)
             self.net = self.net.cuda()
 
-    # ---------------------------------------------------#
-    #   检测图片
-    # ---------------------------------------------------#
     def detect_image(self, image, crop=False, count=False):
-        # ---------------------------------------------------#
-        #   计算输入图片的高和宽
-        # ---------------------------------------------------#
         image_shape = np.array(np.shape(image)[0:2])
         # ---------------------------------------------------#
         #   计算resize后的图片的大小，resize后的图片短边为600
