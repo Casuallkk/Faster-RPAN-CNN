@@ -54,7 +54,6 @@ class FRCNN(object):
         self.colors = list(map(lambda x: (int(x[0] * 255), int(x[1] * 255), int(x[2] * 255)), self.colors))
         self.generate()
 
-
     def generate(self):
         self.net = FasterRCNN(self.num_classes, "predict", anchor_scales=self.anchors_size, backbone=self.backbone)
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -283,7 +282,7 @@ class FRCNN(object):
                 continue
 
             f.write("%s %s %s %s %s %s\n" % (
-            predicted_class, score[:6], str(int(left)), str(int(top)), str(int(right)), str(int(bottom))))
+                predicted_class, score[:6], str(int(left)), str(int(top)), str(int(right)), str(int(bottom))))
 
         f.close()
         return
