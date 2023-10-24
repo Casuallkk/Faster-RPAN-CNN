@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 from utils.dataloader import FRCNNDataset
 
-classes_path = 'model_data/voc_classes.txt'
+classes_path = 'model_data/annotation_classes.txt'
 trainval_percent = 0.8
 train_percent = 0.75
 VOCdevkit_path = 'VOCdevkit'
@@ -15,8 +15,9 @@ photo_nums = np.zeros(len(VOCdevkit_sets))
 nums = np.zeros(len(classes))
 
 
-def convert_annotation(year, image_id, list_file):
-    in_file = open(os.path.join(VOCdevkit_path, 'VOC/Annotations/%s.xml' % image_id), encoding='utf-8')
+def convert_annotation(image_id, list_file):
+    in_file = open(os.path.join(
+        VOCdevkit_path, 'VOC/Annotations/%s.xml' % image_id), encoding='utf-8')
     tree = ET.parse(in_file)
     root = tree.getroot()
 
@@ -70,11 +71,11 @@ if __name__ == "__main__":
                 fval.write(name)
         else:
             ftest.write(name)
-        ftrainval.close()
-        ftrain.close()
-        fval.close()
-        ftest.close()
-        print("Generate txt in ImageSets done.")
+    ftrainval.close()
+    ftrain.close()
+    fval.close()
+    ftest.close()
+    print("Generate txt in ImageSets done.")
 
     print("Generate train.txt and val.txt for train.")
     type_index = 0
