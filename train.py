@@ -166,10 +166,15 @@ if __name__ == "__main__":
         if epoch_step == 0 or epoch_step_val == 0:
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-        train_dataset = FRCNNDataset(train_lines, input_shape, train=True, mosaic=mosaic, mixup=mixup,
-                                     mosaic_prob=mosaic_prob, mixup_prob=mixup_prob)
-        val_dataset = FRCNNDataset(val_lines, input_shape, train=False, mosaic=mosaic, mixup=mixup,
-                                   mosaic_prob=mosaic_prob, mixup_prob=mixup_prob, special_aug_ratio=0)
+        train_dataset = FRCNNDataset(train_lines, input_shape,
+                                     train=True, mosaic=mosaic,
+                                     mixup=mixup, mosaic_prob=mosaic_prob,
+                                     mixup_prob=mixup_prob,
+                                     special_aug_ratio=special_aug_ratio)
+        val_dataset = FRCNNDataset(val_lines, input_shape, train=False,
+                                   mosaic=False, mixup=False,
+                                   mosaic_prob=0, mixup_prob=0,
+                                   special_aug_ratio=0)
 
         gen = DataLoader(train_dataset, shuffle=True, batch_size=batch_size,
                          num_workers=num_workers, pin_memory=True,
@@ -211,12 +216,14 @@ if __name__ == "__main__":
                 if epoch_step == 0 or epoch_step_val == 0:
                     raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-                gen = DataLoader(train_dataset, shuffle=True, batch_size=batch_size,
+                gen = DataLoader(train_dataset, shuffle=True,
+                                 batch_size=batch_size,
                                  num_workers=num_workers,
                                  pin_memory=True,
                                  drop_last=True, collate_fn=frcnn_dataset_collate,
                                  worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
-                gen_val = DataLoader(val_dataset, shuffle=True, batch_size=batch_size, num_workers=num_workers,
+                gen_val = DataLoader(val_dataset, shuffle=True,
+                                     batch_size=batch_size, num_workers=num_workers,
                                      pin_memory=True,
                                      drop_last=True, collate_fn=frcnn_dataset_collate,
                                      worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
@@ -225,7 +232,9 @@ if __name__ == "__main__":
 
             set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
 
-            fit_one_epoch(model, train_util, loss_history, eval_callback, optimizer, epoch, epoch_step, epoch_step_val,
-                          gen, gen_val, UnFreeze_Epoch, Cuda, fp16, scaler, save_period, save_dir)
+            fit_one_epoch(model, train_util, ema, loss_history, eval_callback,
+                          optimizer, epoch, epoch_step, epoch_step_val,
+                          gen, gen_val, UnFreeze_Epoch, Cuda, fp16, scaler,
+                          save_period, save_dir)
 
         loss_history.writer.close()
