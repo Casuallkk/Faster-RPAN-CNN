@@ -4,22 +4,26 @@ import numpy as np
 import torch
 from PIL import Image
 from torch.utils.data.dataset import Dataset
-
+from random import sample, shuffle
 from utils.image_processor import ImageProcessor
 
 
 class FRCNNDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape, train, mosaic, mixup, mosaic_prob, mixup_prob, special_aug_ratio=0.7):
+    def __init__(self, annotation_lines, input_shape, train, epoch_length, mosaic,
+                 mixup, mosaic_prob, mixup_prob, special_aug_ratio=0.7):
         self.input_shape = input_shape
         self.annotation_lines = annotation_lines
         self.length = len(annotation_lines)
         self.input_shape = input_shape
+        self.epoch_length = epoch_length
         self.mosaic = mosaic
         self.mosaic_prob = mosaic_prob
         self.mixup = mixup
         self.mixup_prob = mixup_prob
         self.train = train
         self.special_aug_ratio = special_aug_ratio
+        self.epoch_now = -1
+        self.length = len(self.annotation_lines)
 
     def __len__(self):
         return self.length
@@ -40,12 +44,24 @@ class FRCNNDataset(Dataset):
         index = index % self.length
         #   训练时进行数据的随机增强
         #   验证时不进行数据的随机增强
-        image, y = self.get_random_data(self.annotation_lines[index], self.input_shape[0:2], random=self.train)
+        if (self.mosaic and self.rand() < self.mosaic_prob
+                and self.epoch_now < self.epoch_length * self.special_aug_ratio):
+            lines = sample(self.annotation_lines, 3)
+            lines.append(self.annotation_lines[index])
+            shuffle(lines)
+            image, box = self.get_random_data_with_Mosaic(lines, self.input_shape)
+
+            if self.mixup and self.rand() < self.mixup_prob:
+                lines = sample(self.annotation_lines, 1)
+                image_2, box_2 = self.get_random_data(lines[0], self.input_shape, random=self.train)
+                image, box = self.get_random_data_with_MixUp(image, box, image_2, box_2)
+        else:
+            image, box = self.get_random_data(self.annotation_lines[index], self.input_shape[0:2], random=self.train)
         image = np.transpose(
             ImageProcessor.normalize(np.array(image, dtype=np.float32)), (2, 0, 1))
-        box_data = np.zeros((len(y), 5))
-        if len(y) > 0:
-            box_data[:len(y)] = y
+        box_data = np.zeros((len(box), 5))
+        if len(box) > 0:
+            box_data[:len(box)] = box
 
         box = box_data[:, :4]
         label = box_data[:, -1]
@@ -107,7 +123,7 @@ class FRCNNDataset(Dataset):
         #   翻转图像
         flip = self.rand() < .5
         if flip: image = image.transpose(Image.FLIP_LEFT_RIGHT)
-
+        """
         image_data = np.array(image, np.uint8)
         #   对图像进行色域变换
         #   计算色域变换的参数
@@ -122,7 +138,8 @@ class FRCNNDataset(Dataset):
         lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
 
         image_data = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
-        image_data = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)
+        image_data = cv2.cvtColor(image_data, cv2.COLOR_HSV2RGB)"""
+        image_data = ImageProcessor.rgb2hsv(image)
 
         #   对真实框进行调整
         if len(box) > 0:
@@ -138,6 +155,47 @@ class FRCNNDataset(Dataset):
             box = box[np.logical_and(box_w > 1, box_h > 1)]
 
         return image_data, box
+    def merge_bboxes(self, bboxes, cutx, cuty):
+        merge_bbox = []
+        for i in range(len(bboxes)):
+            for box in bboxes[i]:
+                tmp_box = []
+                x1, y1, x2, y2 = box[0], box[1], box[2], box[3]
+                if i == 0:
+                    if y1 > cuty or x1 > cutx:
+                        continue
+                    if y2 >= cuty and y1 <= cuty:
+                        y2 = cuty
+                    if x2 >= cutx and x1 <= cutx:
+                        x2 = cutx
+                if i == 1:
+                    if y2 < cuty or x1 > cutx:
+                        continue
+                    if y2 >= cuty and y1 <= cuty:
+                        y1 = cuty
+                    if x2 >= cutx and x1 <= cutx:
+                        x2 = cutx
+                if i == 2:
+                    if y2 < cuty or x2 < cutx:
+                        continue
+                    if y2 >= cuty and y1 <= cuty:
+                        y1 = cuty
+                    if x2 >= cutx and x1 <= cutx:
+                        x1 = cutx
+                if i == 3:
+                    if y1 > cuty or x2 < cutx:
+                        continue
+                    if y2 >= cuty and y1 <= cuty:
+                        y2 = cuty
+                    if x2 >= cutx and x1 <= cutx:
+                        x1 = cutx
+                tmp_box.append(x1)
+                tmp_box.append(y1)
+                tmp_box.append(x2)
+                tmp_box.append(y2)
+                tmp_box.append(box[-1])
+                merge_bbox.append(tmp_box)
+        return merge_bbox
 
     def get_random_data_with_Mosaic(self, annotation_line, input_shape, jitter=0.3, hue=.1, sat=0.7, val=0.4):
         """获取mosaic增强下的随机数据"""
@@ -215,7 +273,7 @@ class FRCNNDataset(Dataset):
         new_image[cuty:, :cutx, :] = image_datas[1][cuty:, :cutx, :]
         new_image[cuty:, cutx:, :] = image_datas[2][cuty:, cutx:, :]
         new_image[:cuty, cutx:, :] = image_datas[3][:cuty, cutx:, :]
-
+        """
         new_image = np.array(new_image, np.uint8)
         #   对图像进行色域变换
         #   计算色域变换的参数
@@ -230,7 +288,8 @@ class FRCNNDataset(Dataset):
         lut_val = np.clip(x * r[2], 0, 255).astype(dtype)
 
         new_image = cv2.merge((cv2.LUT(hue, lut_hue), cv2.LUT(sat, lut_sat), cv2.LUT(val, lut_val)))
-        new_image = cv2.cvtColor(new_image, cv2.COLOR_HSV2RGB)
+        new_image = cv2.cvtColor(new_image, cv2.COLOR_HSV2RGB)"""
+        new_image = ImageProcessor.rgb2hsv(new_image)
 
         #   对框进行进一步的处理
         new_boxes = self.merge_bboxes(box_datas, cutx, cuty)
