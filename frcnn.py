@@ -64,10 +64,10 @@ class FRCNN(object):
     def detect_image(self, image):
         image_shape = np.array(np.shape(image)[0:2])
         input_shape = ImageProcessor.get_new_img_size(image_shape[0], image_shape[1])
-        image = ImageProcessor.img2rgb(image)
-        image_data = ImageProcessor.resize(image, [input_shape[1], input_shape[0]])
+        image_data = ImageProcessor.preprocess(image, input_shape)
+        """
         image_data = np.expand_dims(np.transpose(
-            ImageProcessor.normalize(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
+            ImageProcessor.normalize(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)"""
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
@@ -128,10 +128,11 @@ class FRCNN(object):
         f = open(os.path.join(map_out_path, "detection-results/" + image_id + ".txt"), "w")
         image_shape = np.array(np.shape(image)[0:2])
         input_shape = ImageProcessor.get_new_img_size(image_shape[0], image_shape[1])
-        image = ImageProcessor.img2rgb(image)
+        """image = ImageProcessor.img2rgb(image)
         image_data = ImageProcessor.resize(image, [input_shape[1], input_shape[0]])
         image_data = np.expand_dims(np.transpose(
-            ImageProcessor.normalize(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
+            ImageProcessor.normalize(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)"""
+        image_data = ImageProcessor.preprocess(image, input_shape)
 
         with torch.no_grad():
             images = torch.from_numpy(image_data)
