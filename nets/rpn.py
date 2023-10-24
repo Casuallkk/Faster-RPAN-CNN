@@ -7,7 +7,7 @@ from utils.anchors import _enumerate_shifted_anchor, generate_anchor_base
 from utils.utils_bbox import loc2bbox
 
 
-class ProposalCreator():
+class ProposalCreator:
     def __init__(
             self,
             mode,

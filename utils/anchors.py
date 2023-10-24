@@ -1,7 +1,7 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
-
-#   生成基础的先验框
+#   生成基础的anchor
 def generate_anchor_base(base_size=16, ratios=[0.5, 1, 2], anchor_scales=[8, 16, 32]):
     anchor_base = np.zeros((len(ratios) * len(anchor_scales), 4), dtype=np.float32)
     for i in range(len(ratios)):
@@ -35,7 +35,6 @@ def _enumerate_shifted_anchor(anchor_base, feat_stride, height, width):
 
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
 
     nine_anchors = generate_anchor_base()
     print(nine_anchors)
