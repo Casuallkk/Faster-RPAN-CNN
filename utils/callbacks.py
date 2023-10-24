@@ -12,9 +12,9 @@ from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
-from image_processor import ImageProcessor
-from .utils_bbox import DecodeBox
-from .utils_map import get_coco_map, get_map
+from utils.image_processor import ImageProcessor
+from utils.utils_bbox import DecodeBox
+from utils.utils_map import get_coco_map, get_map
 
 
 class LossHistory():
@@ -118,7 +118,6 @@ class EvalCallback():
         image_shape = np.array(np.shape(image)[0:2])
         input_shape = ImageProcessor.get_new_img_size(image_shape[0], image_shape[1])
         image = ImageProcessor.img2rgb(image)
-
         image_data = ImageProcessor.resize(image, [input_shape[1], input_shape[0]])
         image_data = np.expand_dims(np.transpose(
             ImageProcessor.normalize(np.array(image_data, dtype='float32')), (2, 0, 1)), 0)
@@ -154,7 +153,7 @@ class EvalCallback():
                 continue
 
             f.write("%s %s %s %s %s %s\n" % (
-            predicted_class, score[:6], str(int(left)), str(int(top)), str(int(right)), str(int(bottom))))
+                predicted_class, score[:6], str(int(left)), str(int(top)), str(int(right)), str(int(bottom))))
 
         f.close()
         return

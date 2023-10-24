@@ -238,6 +238,7 @@ class FasterRCNNTrainer(nn.Module):
         self.loc_normalize_std = [0.1, 0.1, 0.2, 0.2]
 
     def _fast_rcnn_loc_loss(self, pred_loc, gt_loc, gt_label, sigma):
+        """计算回归loss"""
         pred_loc = pred_loc[gt_label > 0]
         gt_loc = gt_loc[gt_label > 0]
 

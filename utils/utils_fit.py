@@ -6,7 +6,7 @@ from tqdm import tqdm
 from utils.dataloader import FRCNNDataset
 
 
-def fit_one_epoch(model, train_util, ema, loss_history, eval_callback,
+def fit_one_epoch(model, model_train, train_util, ema, loss_history, eval_callback,
                   optimizer, epoch, epoch_step, epoch_step_val, gen,
                   gen_val, Epoch, cuda, fp16, scaler, save_period, save_dir):
     total_loss = 0
@@ -27,6 +27,8 @@ def fit_one_epoch(model, train_util, ema, loss_history, eval_callback,
                     images = images.cuda()
 
             rpn_loc, rpn_cls, roi_loc, roi_cls, total = train_util.train_step(images, boxes, labels, 1, fp16, scaler)
+            if ema:
+                ema.update(model_train)
             total_loss += total.item()
             rpn_loc_loss += rpn_loc.item()
             rpn_cls_loss += rpn_cls.item()

@@ -15,7 +15,7 @@ from utils.utils_bbox import DecodeBox
 class FRCNN(object):
     _defaults = {
         "model_path": 'model_data/voc_weights_resnet.pth',
-        "classes_path": 'model_data/voc_classes.txt',
+        "classes_path": 'model_data/annotation_classes.txt',
         "backbone": "resnet50",
         "input_shape": [600, 600],
         "confidence": 0.5,

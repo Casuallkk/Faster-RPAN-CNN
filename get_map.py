@@ -12,8 +12,6 @@ from frcnn import FRCNN
 class GetMap:
     """
     工具类
-    注：若希望修改yolo的index以获得不同注意力机制下的数据，
-    请在yolo.py中提前对model path, index, class path进行修改
     """
     def __init__(self, classes_path, score_threhold, map_out_path,
                  MINOVERLAP=0.5, confidence=0.001, nms_iou=0.5, map_vis=True):

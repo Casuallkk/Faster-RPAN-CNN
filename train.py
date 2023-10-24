@@ -50,9 +50,9 @@ if __name__ == "__main__":
 
     Init_Epoch = 0
     Freeze_Epoch = 50
-    Freeze_batch_size = 4
-    UnFreeze_Epoch = 100
-    Unfreeze_batch_size = 2
+    Freeze_batch_size = 8
+    UnFreeze_Epoch = 300
+    Unfreeze_batch_size = 4
     Freeze_Train = True
 
     Init_lr = 1e-4
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     momentum = 0.9
     weight_decay = 0
     lr_decay_type = 'cos'
-    save_period = 5
+    save_period = 10
     save_dir = 'logs'
     eval_flag = True
     eval_period = 10
@@ -73,7 +73,8 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(str(x) for x in train_gpu)
     ngpus_per_node = len(train_gpu)
-    print('Number of devices: {}'.format(ngpus_per_node))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    # print('Number of devices: {}'.format(ngpus_per_node))
     seed_everything(seed)
 
     model = FasterRCNN(num_classes, anchor_scales=anchors_size, backbone=backbone, pretrained=pretrained)
@@ -81,8 +82,6 @@ if __name__ == "__main__":
         weights_init(model)
     if model_path != '':
         print('Load weights {}.'.format(model_path))
-
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         model_dict = model.state_dict()
         pretrained_dict = torch.load(model_path, map_location=device)
         load_key, no_load_key, temp_dict = [], [], {}
@@ -104,17 +103,14 @@ if __name__ == "__main__":
 
     if fp16:
         from torch.cuda.amp import GradScaler as GradScaler
-
         scaler = GradScaler()
     else:
         scaler = None
-
+    model_train = model.train()
     if Cuda:
-        model_train = torch.nn.DataParallel(model)
+        model_train = torch.nn.DataParallel(model_train)
         cudnn.benchmark = True
         model_train = model_train.cuda()
-    else:
-        model_train = model.train()
     #   权值平滑
     ema = ModelEMA(model_train)
 
@@ -165,7 +161,9 @@ if __name__ == "__main__":
 
         if epoch_step == 0 or epoch_step_val == 0:
             raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
-
+        if ema:
+            ema.updates = epoch_step * Init_Epoch
+        # 构建数据集加载器
         train_dataset = FRCNNDataset(train_lines, input_shape,
                                      train=True, mosaic=mosaic,
                                      mixup=mixup, mosaic_prob=mosaic_prob,
@@ -176,13 +174,14 @@ if __name__ == "__main__":
                                    mosaic_prob=0, mixup_prob=0,
                                    special_aug_ratio=0)
 
-        gen = DataLoader(train_dataset, shuffle=True, batch_size=batch_size,
-                         num_workers=num_workers, pin_memory=True,
-                         drop_last=True, collate_fn=frcnn_dataset_collate,
-                         worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
-        gen_val = DataLoader(val_dataset, shuffle=True, batch_size=batch_size, num_workers=num_workers, pin_memory=True,
-                             drop_last=True, collate_fn=frcnn_dataset_collate,
-                             worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
+        train_data = DataLoader(train_dataset, shuffle=True, batch_size=batch_size,
+                                num_workers=num_workers, pin_memory=True,
+                                drop_last=True, collate_fn=frcnn_dataset_collate,
+                                worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
+        val_data = DataLoader(val_dataset, shuffle=True, batch_size=batch_size,
+                              num_workers=num_workers, pin_memory=True,
+                              drop_last=True, collate_fn=frcnn_dataset_collate,
+                              worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
 
         train_util = FasterRCNNTrainer(model_train, optimizer)
         #   记录eval的map曲线
@@ -216,25 +215,25 @@ if __name__ == "__main__":
                 if epoch_step == 0 or epoch_step_val == 0:
                     raise ValueError("数据集过小，无法继续进行训练，请扩充数据集。")
 
-                gen = DataLoader(train_dataset, shuffle=True,
-                                 batch_size=batch_size,
-                                 num_workers=num_workers,
-                                 pin_memory=True,
-                                 drop_last=True, collate_fn=frcnn_dataset_collate,
-                                 worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
-                gen_val = DataLoader(val_dataset, shuffle=True,
-                                     batch_size=batch_size, num_workers=num_workers,
-                                     pin_memory=True,
-                                     drop_last=True, collate_fn=frcnn_dataset_collate,
-                                     worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
+                train_data = DataLoader(train_dataset, shuffle=True,
+                                        batch_size=batch_size,
+                                        num_workers=num_workers,
+                                        pin_memory=True,
+                                        drop_last=True, collate_fn=frcnn_dataset_collate,
+                                        worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
+                val_data = DataLoader(val_dataset, shuffle=True,
+                                      batch_size=batch_size, num_workers=num_workers,
+                                      pin_memory=True,
+                                      drop_last=True, collate_fn=frcnn_dataset_collate,
+                                      worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
 
                 UnFreeze_flag = True
 
             set_optimizer_lr(optimizer, lr_scheduler_func, epoch)
 
-            fit_one_epoch(model, train_util, ema, loss_history, eval_callback,
+            fit_one_epoch(model, model_train, train_util, ema, loss_history, eval_callback,
                           optimizer, epoch, epoch_step, epoch_step_val,
-                          gen, gen_val, UnFreeze_Epoch, Cuda, fp16, scaler,
+                          train_data, val_data, UnFreeze_Epoch, Cuda, fp16, scaler,
                           save_period, save_dir)
 
         loss_history.writer.close()
