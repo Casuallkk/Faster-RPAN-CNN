@@ -178,32 +178,24 @@ if __name__ == "__main__":
         # -------------------------------------------------------------------#
         batch_size = Freeze_batch_size if Freeze_Train else Unfreeze_batch_size
 
-        # -------------------------------------------------------------------#
         #   判断当前batch_size，自适应调整学习率
-        # -------------------------------------------------------------------#
         nbs = 16
         lr_limit_max = 1e-4 if optimizer_type == 'adam' else 5e-2
         lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
         Init_lr_fit = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
         Min_lr_fit = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
 
-        # ---------------------------------------#
         #   根据optimizer_type选择优化器
-        # ---------------------------------------#
         optimizer = {
             'adam': optim.Adam(model.parameters(), Init_lr_fit, betas=(momentum, 0.999), weight_decay=weight_decay),
             'sgd': optim.SGD(model.parameters(), Init_lr_fit, momentum=momentum, nesterov=True,
                              weight_decay=weight_decay)
         }[optimizer_type]
 
-        # ---------------------------------------#
         #   获得学习率下降的公式
-        # ---------------------------------------#
         lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
 
-        # ---------------------------------------#
         #   判断每一个世代的长度
-        # ---------------------------------------#
         epoch_step = num_train // batch_size
         epoch_step_val = num_val // batch_size
 
@@ -221,41 +213,29 @@ if __name__ == "__main__":
                              worker_init_fn=partial(worker_init_fn, rank=0, seed=seed))
 
         train_util = FasterRCNNTrainer(model_train, optimizer)
-        # ----------------------#
         #   记录eval的map曲线
-        # ----------------------#
-        eval_callback = EvalCallback(model_train, input_shape, class_names, num_classes, val_lines, log_dir, Cuda, \
+        eval_callback = EvalCallback(model_train, input_shape, class_names, num_classes, val_lines, log_dir, Cuda,
                                      eval_flag=eval_flag, period=eval_period)
 
-        # ---------------------------------------#
         #   开始模型训练
-        # ---------------------------------------#
         for epoch in range(Init_Epoch, UnFreeze_Epoch):
-            # ---------------------------------------#
             #   如果模型有冻结学习部分
             #   则解冻，并设置参数
-            # ---------------------------------------#
             if epoch >= Freeze_Epoch and not UnFreeze_flag and Freeze_Train:
                 batch_size = Unfreeze_batch_size
 
-                # -------------------------------------------------------------------#
                 #   判断当前batch_size，自适应调整学习率
-                # -------------------------------------------------------------------#
                 nbs = 16
                 lr_limit_max = 1e-4 if optimizer_type == 'adam' else 5e-2
                 lr_limit_min = 1e-4 if optimizer_type == 'adam' else 5e-4
                 Init_lr_fit = min(max(batch_size / nbs * Init_lr, lr_limit_min), lr_limit_max)
                 Min_lr_fit = min(max(batch_size / nbs * Min_lr, lr_limit_min * 1e-2), lr_limit_max * 1e-2)
-                # ---------------------------------------#
                 #   获得学习率下降的公式
-                # ---------------------------------------#
                 lr_scheduler_func = get_lr_scheduler(lr_decay_type, Init_lr_fit, Min_lr_fit, UnFreeze_Epoch)
 
                 for param in model.extractor.parameters():
                     param.requires_grad = True
-                # ------------------------------------#
                 #   冻结bn层
-                # ------------------------------------#
                 model.freeze_bn()
 
                 epoch_step = num_train // batch_size

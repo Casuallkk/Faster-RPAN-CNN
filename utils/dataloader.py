@@ -8,7 +8,9 @@ from utils.image_processor import ImageProcessor
 
 
 class FRCNNDataset(Dataset):
-    def __init__(self, annotation_lines, input_shape=[600, 600], train=True):
+    def __init__(self, annotation_lines, input_shape=None, train=True):
+        if input_shape is None:
+            input_shape = [600, 600]
         self.annotation_lines = annotation_lines
         self.length = len(annotation_lines)
         self.input_shape = input_shape
