@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 from tqdm import tqdm
 
-from utils.utils import get_classes
+from utils.dataloader import FRCNNDataset
 from utils.utils_map import get_coco_map, get_map
 from frcnn import FRCNN
 
@@ -28,7 +28,7 @@ class GetMap:
         self.map_vis = map_vis
         # 是否可视化效果，默认为True
         self.map_out_path = map_out_path
-        self.class_names, _ = get_classes(classes_path)
+        self.class_names, _ = FRCNNDataset.get_classes(classes_path)
 
         if not os.path.exists(map_out_path):
             os.makedirs(map_out_path)
