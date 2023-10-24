@@ -17,6 +17,7 @@ class FRCNN(object):
         "model_path": 'model_data/voc_weights_resnet.pth',
         "classes_path": 'model_data/voc_classes.txt',
         "backbone": "resnet50",
+        "input_shape": [600, 600],
         "confidence": 0.5,
         "nms_iou": 0.3,
         'anchors_size': [8, 16, 32],
