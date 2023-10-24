@@ -12,7 +12,7 @@ class ProposalCreator:
             self,
             mode,
             nms_iou=0.7,
-            n_train_pre_nms=12000,
+            n_train_pre_nms=3000,
             n_train_post_nms=600,
             n_test_pre_nms=3000,
             n_test_post_nms=300,
@@ -46,7 +46,6 @@ class ProposalCreator:
         #   防止建议框超出图像边缘
         roi[:, [0, 2]] = torch.clamp(roi[:, [0, 2]], min=0, max=img_size[1])
         roi[:, [1, 3]] = torch.clamp(roi[:, [1, 3]], min=0, max=img_size[0])
-
         #   建议框的宽高的最小值不可以小于16
         min_size = self.min_size * scale
         keep = torch.where(((roi[:, 2] - roi[:, 0]) >= min_size) & ((roi[:, 3] - roi[:, 1]) >= min_size))[0]
@@ -60,7 +59,6 @@ class ProposalCreator:
             order = order[:n_pre_nms]
         roi = roi[order, :]
         score = score[order]
-
         #   对建议框进行非极大抑制
         #   使用官方的非极大抑制会快非常多
         keep = nms(roi, score, self.nms_iou)

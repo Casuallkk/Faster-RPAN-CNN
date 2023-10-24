@@ -1,5 +1,4 @@
 import warnings
-
 import torch
 from torch import nn
 from torchvision.ops import RoIPool
