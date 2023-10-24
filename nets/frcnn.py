@@ -16,7 +16,6 @@ class FasterRCNN(nn.Module):
                  pretrained=False):
         super(FasterRCNN, self).__init__()
         self.feat_stride = feat_stride
-        #   一共存在两个主干
         #   vgg和resnet50
         if backbone == 'vgg':
             self.extractor, classifier = decom_vgg16(pretrained)

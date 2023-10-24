@@ -24,6 +24,11 @@ class FRCNNDataset(Dataset):
         class_names = [c.strip() for c in class_names]
         return class_names, len(class_names)
 
+    @staticmethod
+    def get_lr(optimizer):
+        for param_group in optimizer.param_groups:
+            return param_group['lr']
+
     def __getitem__(self, index):
         index = index % self.length
         #   训练时进行数据的随机增强

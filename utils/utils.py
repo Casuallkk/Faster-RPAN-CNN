@@ -4,12 +4,6 @@ import torch
 from PIL import Image
 
 
-#   获得学习率
-def get_lr(optimizer):
-    for param_group in optimizer.param_groups:
-        return param_group['lr']
-
-
 #   设置种子
 def seed_everything(seed=11):
     random.seed(seed)

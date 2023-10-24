@@ -3,7 +3,7 @@ import os
 import torch
 from tqdm import tqdm
 
-from utils.utils import get_lr
+from utils.dataloader import FRCNNDataset
 
 
 def fit_one_epoch(model, train_util, loss_history, eval_callback, optimizer, epoch, epoch_step, epoch_step_val, gen,
@@ -37,7 +37,7 @@ def fit_one_epoch(model, train_util, loss_history, eval_callback, optimizer, epo
                                 'rpn_cls': rpn_cls_loss / (iteration + 1),
                                 'roi_loc': roi_loc_loss / (iteration + 1),
                                 'roi_cls': roi_cls_loss / (iteration + 1),
-                                'lr': get_lr(optimizer)})
+                                'lr': FRCNNDataset.get_lr(optimizer)})
             pbar.update(1)
 
     print('Finish Train')
