@@ -1,7 +1,6 @@
 import random
 import numpy as np
 import torch
-from PIL import Image
 
 
 #   设置种子
