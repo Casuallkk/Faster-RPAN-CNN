@@ -5,6 +5,7 @@ from torch.nn import functional as F
 from torchvision.ops import nms
 from utils.anchors import _enumerate_shifted_anchor, generate_anchor_base
 from utils.utils_bbox import loc2bbox
+from nets.can import can_block
 
 
 class ProposalCreator:
@@ -87,6 +88,7 @@ class RegionProposalNetwork(nn.Module):
 
         #   先进行一个3x3的卷积，可理解为特征整合
         self.conv1 = nn.Conv2d(in_channels, mid_channels, 3, 1, 1)
+        self.refine_feat = can_block(512)
         #   分类预测先验框内部是否包含物体
         self.score = nn.Conv2d(mid_channels, n_anchor * 2, 1, 1, 0)
         #   回归预测对先验框进行调整
@@ -105,11 +107,12 @@ class RegionProposalNetwork(nn.Module):
         n, _, h, w = x.shape
         #   先进行一个3x3的卷积，可理解为特征整合
         x = F.relu(self.conv1(x))
+        refine_feat = self.refine_feat(x)
         #   回归预测对先验框进行调整
-        rpn_locs = self.loc(x)
+        rpn_locs = self.loc(refine_feat)
         rpn_locs = rpn_locs.permute(0, 2, 3, 1).contiguous().view(n, -1, 4)
         #   分类预测先验框内部是否包含物体
-        rpn_scores = self.score(x)
+        rpn_scores = self.score(refine_feat)
         rpn_scores = rpn_scores.permute(0, 2, 3, 1).contiguous().view(n, -1, 2)
 
         #   进行softmax概率计算，每个先验框只有两个判别结果
