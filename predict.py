@@ -9,10 +9,6 @@ from frcnn import FRCNN
 
 if __name__ == "__main__":
     frcnn = FRCNN()
-    mode = "predict"
-    #   crop、count仅在mode='predict'时有效
-    crop = False
-    count = False
     origin_path = "img/"
     save_path = "img_out/"
 

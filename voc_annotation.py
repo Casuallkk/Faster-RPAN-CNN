@@ -43,7 +43,6 @@ if __name__ == "__main__":
     if " " in os.path.abspath(VOCdevkit_path):
         raise ValueError("Error!")
 
-
     print("Generate txt in ImageSets.")
     xmlfilepath = os.path.join(VOCdevkit_path, 'VOC/Annotations')
     saveBasePath = os.path.join(VOCdevkit_path, 'VOC/ImageSets/Main')
@@ -91,4 +90,3 @@ if __name__ == "__main__":
         type_index += 1
         list_file.close()
     print("Generate train.txt and val.txt for train done.")
-

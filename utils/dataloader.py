@@ -139,6 +139,7 @@ class FRCNNDataset(Dataset):
             box = box[np.logical_and(box_w > 1, box_h > 1)]
 
         return image_data, box
+
     def merge_bboxes(self, bboxes, cutx, cuty):
         merge_bbox = []
         for i in range(len(bboxes)):
@@ -192,7 +193,7 @@ class FRCNNDataset(Dataset):
         for line in annotation_line:
             line_content = line.split()
             image = Image.open(line_content[0])
-            image = ImageProcessor.cvtColor(image)
+            image = ImageProcessor.img2rgb(image)
 
             iw, ih = image.size
             box = np.array([np.array(list(map(int, box.split(',')))) for box in line_content[1:]])
@@ -286,3 +287,9 @@ def frcnn_dataset_collate(batch):
         labels.append(label)
     images = torch.from_numpy(np.array(images))
     return images, bboxes, labels
+
+
+if __name__ == '__main__':
+    classes_path = 'model_data/annotation_classes.txt'
+    with open(classes_path, encoding='utf-8') as f:
+        class_names = f.readlines()

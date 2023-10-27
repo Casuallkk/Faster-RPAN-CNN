@@ -70,7 +70,6 @@ if __name__ == "__main__":
     val_annotation_path = 'model_data/val.txt'
 
     class_names, num_classes = FRCNNDataset.get_classes(classes_path)
-
     os.environ["CUDA_VISIBLE_DEVICES"] = ','.join(str(x) for x in train_gpu)
     ngpus_per_node = len(train_gpu)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -168,11 +167,13 @@ if __name__ == "__main__":
                                      train=True, mosaic=mosaic,
                                      mixup=mixup, mosaic_prob=mosaic_prob,
                                      mixup_prob=mixup_prob,
-                                     special_aug_ratio=special_aug_ratio)
+                                     special_aug_ratio=special_aug_ratio,
+                                     epoch_length=UnFreeze_Epoch,)
         val_dataset = FRCNNDataset(val_lines, input_shape, train=False,
                                    mosaic=False, mixup=False,
                                    mosaic_prob=0, mixup_prob=0,
-                                   special_aug_ratio=0)
+                                   special_aug_ratio=0,
+                                   epoch_length=UnFreeze_Epoch)
 
         train_data = DataLoader(train_dataset, shuffle=True, batch_size=batch_size,
                                 num_workers=num_workers, pin_memory=True,
