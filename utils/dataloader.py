@@ -71,7 +71,7 @@ class FRCNNDataset(Dataset):
         """获取随机数"""
         return np.random.rand() * (b - a) + a
 
-    def get_random_data(self, annotation_line, input_shape, jitter=.3, hue=.1, sat=0.7, val=0.4, random=True):
+    def get_random_data(self, annotation_line, input_shape, jitter=.3, random=True):
         """获取随机数据"""
         line = annotation_line.split()
         image = Image.open(line[0])
@@ -182,7 +182,7 @@ class FRCNNDataset(Dataset):
                 merge_bbox.append(tmp_box)
         return merge_bbox
 
-    def get_random_data_with_Mosaic(self, annotation_line, input_shape, jitter=0.3, hue=.1, sat=0.7, val=0.4):
+    def get_random_data_with_Mosaic(self, annotation_line, input_shape, jitter=0.3):
         """获取mosaic增强下的随机数据"""
         h, w = input_shape
         min_offset_x = self.rand(0.7)

@@ -20,7 +20,7 @@ class ChannelAttention(nn.Module):
     def forward(self, x):
         avg_out = self.avg_pool(x)
         max_out = self.max_pool(x)
-        cat_out = torch.cat([avg_out, max_out], axis=1)
+        cat_out = torch.cat([avg_out, max_out], dim=1)
         out = self.sigmoid(self.conv2(self.sigmoid(self.conv1(cat_out))))
         return out
 

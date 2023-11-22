@@ -168,7 +168,7 @@ if __name__ == "__main__":
                                      mixup=mixup, mosaic_prob=mosaic_prob,
                                      mixup_prob=mixup_prob,
                                      special_aug_ratio=special_aug_ratio,
-                                     epoch_length=UnFreeze_Epoch,)
+                                     epoch_length=UnFreeze_Epoch)
         val_dataset = FRCNNDataset(val_lines, input_shape, train=False,
                                    mosaic=False, mixup=False,
                                    mosaic_prob=0, mixup_prob=0,
